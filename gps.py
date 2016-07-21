@@ -1,7 +1,6 @@
 import serial
 from math import pi,cos, sin,acos
 from time import sleep
-ser = serial.Serial('/dev/ttyS0',9600)
 
 def parse_degrees(locinfo):
 	fl = float(locinfo)/100.0
@@ -9,7 +8,13 @@ def parse_degrees(locinfo):
 	fra = fl - deg
 	return deg + fra*100.0/60
 
-def distance( lat1,  lon1,  lat2,  lon2):
+def distance( loc1,loc2):
+	lat1,lon1 = loc1.lat,loc1.lng
+	lat2,lon2 = loc2.lat,loc2.lng
+
+	if (lat1,lon1) == (lat2,lon2):
+		return 0
+
     	# Convert degrees to radians
 	lat1 = lat1 * pi / 180.0
 	lon1 = lon1 * pi / 180.0
@@ -43,12 +48,35 @@ class location:
 		self.lng = parse_degrees(toks[4]) * lat_s
 		self.alt =float(toks[9])
 
+def get_serial():
+	return serial.Serial('/dev/ttyS0',9600)
 
+def get_location(ser):
+	while True:
+		data = str(ser.readline())
+		if "GPGGA" in data:
+			loc = location(data)
+			return loc
 
-while True:
-	data = str(ser.readline())
-	if "GPGGA" in data:
-		loc = location(data)
-		print(loc.lat, loc.lng,loc.alt)
-		dist = distance(loc.lat,loc.lng,loc.lat,loc.lng+1 )
+def get_locations(ser):
+	while True:
+		yield(get_location(ser))
+
+if __name__ == '__main__':
+	ser = get_serial()
+	prev = get_location(ser)
+
+	with open("/home/pi/Documents/python/gps/gps.log","a") as file:
+		file.write(str.format("{0},{1},{2},{3}\n", prev.time, prev.lat,prev.lng,0))
+		for current in get_locations(ser):
+			try:
+				d = distance(prev,current)
+				if d > 1:
+					file.write(str.format("{0},{1},{2},{3}\n", current.time, current.lat,current.lng,d))
+					print(current.time,current.lat,current.lng,d)
+				prev = current
+			except:
+				pass
+	
+
 
