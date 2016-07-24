@@ -16,15 +16,15 @@ log = setup_logging(name="camera daemon",fileName="/home/pi/Documents/log/camdae
 
 
 def capture_ex(fun):
-	"""
-		decorator to put try catch around a function call and print exception message
-	"""
-	def wrapper(*args, **kwargs):
-		try:
-			return fun(*args,**kwargs)
-		except Exception as ex:
-			log.error("exception at {0} msg: {1}", fun, str(ex))
-	return wrapper
+    """
+        decorator to put try catch around a function call and print exception message
+    """
+    def wrapper(*args, **kwargs):
+        try:
+            return fun(*args,**kwargs)
+        except Exception as ex:
+            log.error("exception at {0} msg: {1}", fun, str(ex))
+    return wrapper
 
 def sorted_ls(path):
         mtime = lambda f: os.stat(os.path.join(path, f)).st_mtime
@@ -51,14 +51,14 @@ class CleanerThread(threading.Thread):
 
         @capture_ex        
         def run(self):
-        	self.process_file()
+            self.process_file()
                         
 class GPSThread(threading.Thread):
-	def __init__(self, loc):
-		self.loc = loc
-		super(GPSThread,self).__init__()
+    def __init__(self, loc):
+        self.loc = loc
+        super(GPSThread,self).__init__()
 
-	def run(self):
+    def run(self):
                 
 
 class DashCamThread(threading.Thread):
@@ -97,7 +97,7 @@ class DashCamThread(threading.Thread):
                                 start_loc = get_location(ser)
                                 lat = start_loc.lat
                         log.info("initial location %s" % start_loc)
-		
+        
                         for filename in self.get_file_name():
                                 if filename:
                                         log.info("recording %s " % filename)
@@ -105,21 +105,21 @@ class DashCamThread(threading.Thread):
                                         self.cam.start_recording(filename)
                                         start = datetime.now()
                                         while (datetime.now() - start).seconds < self.duration:
-                                        	loc = get_location(ser) 
-                                        	if loc.lat != 0: 
-                                        		dist = distance(loc,start_loc)
-                                        		tdf = (loc.time - start_loc.time).seconds
-                                        		speed_ps = dist/tdf
-                                        		speed_m = speed_ps * 3600/tdf
-                                        		speed_mph = speed_m / 1609.34
-                                        		print(dist, tdf, speed_ps, speed_m, speed_mph)
-                                        		start_loc  = loc
-                                        		self.cam.annotate_text = datetime.now().strftime('%Y-%m-%d %H:%M:%S') + str.format(" ({0},{1}:{2})",loc.lat,loc.lng,speed_mph)
-                                        	else:	
-                                        		self.cam.annotate_text = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-	
-                                        	print("cam text: " + self.cam.annotate_text)	
-                                        	self.cam.wait_recording(0.1)
+                                            loc = get_location(ser) 
+                                            if loc.lat != 0: 
+                                                dist = distance(loc,start_loc)
+                                                tdf = (loc.time - start_loc.time).seconds
+                                                speed_ps = dist/tdf
+                                                speed_m = speed_ps * 3600/tdf
+                                                speed_mph = speed_m / 1609.34
+                                                print(dist, tdf, speed_ps, speed_m, speed_mph)
+                                                start_loc  = loc
+                                                self.cam.annotate_text = datetime.now().strftime('%Y-%m-%d %H:%M:%S') + str.format(" ({0},{1}:{2})",loc.lat,loc.lng,speed_mph)
+                                            else:    
+                                                self.cam.annotate_text = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    
+                                            print("cam text: " + self.cam.annotate_text)    
+                                            self.cam.wait_recording(0.1)
 
                                         self.cam.stop_recording()
                                         cleaner = CleanerThread(filename)
