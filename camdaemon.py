@@ -53,11 +53,17 @@ class CleanerThread(threading.Thread):
         def run(self):
         	self.process_file()
                         
+class GPSThread(threading.Thread):
+	def __init__(self, loc):
+		self.loc = loc
+		super(GPSThread,self).__init__()
+
+	def run(self):
                 
 
 class DashCamThread(threading.Thread):
 
-        def __init__(self,video_length, number_to_keep,state, folder):
+        def __init__(self,video_length, number_to_keep,state, folder,loc):
                 self.duration = video_length
                 self.files_to_keep = number_to_keep
                 self.cam = PiCamera()
