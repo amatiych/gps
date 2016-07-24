@@ -129,7 +129,7 @@ if __name__ == '__main__':
         loc = Location()
         prev_loc = Location()
         gps = GPSThread(loc)        
-        camthread = DashCamThread(10, 1,camstate, folder,loc)
+        camthread = DashCamThread(60, 1,camstate, folder,loc)
       
         log.info("Starting main threads")
         gps.start()
