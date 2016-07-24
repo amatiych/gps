@@ -52,6 +52,20 @@ class CleanerThread(threading.Thread):
         def run(self):
             self.process_file()
                 
+class WriteLogThread(threading.Thread):
+        def __init__(self,loc,filename):
+                self.loc = loc
+                self.file_name = filename
+                super(WriteLogThread,self).__init__()
+
+        def run(self):
+	        while True:
+
+	        	if self.loc.lat != 0:
+	        		with open(self.file_name, "a") as f:
+                        		f.write("%s,%.6f,%.6f,%.6f\n" % (loc.time,loc.lat,loc.lng,loc.alt))
+                        		sleep(1)
+		
 
 class DashCamThread(threading.Thread):
 
@@ -129,10 +143,12 @@ if __name__ == '__main__':
         loc = Location()
         prev_loc = Location()
         gps = GPSThread(loc)        
+        log_file_name = "/home/pi/Documents/python/gps/gps_loc.log"       
+        logger = WriteLogThread(loc,log_file_name)      
         camthread = DashCamThread(60, 1,camstate, folder,loc)
-      
         log.info("Starting main threads")
         gps.start()
+        logger.start()
         camthread.start()
         
  
