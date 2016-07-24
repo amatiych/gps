@@ -1,6 +1,6 @@
 from time import sleep
-from gps import  Location,distance,GPSThread
-from picamera import PiCamera
+from gps import  Location,distance,GPSThread, speed
+from picamera import PiCamera, color
 from datetime import datetime
 import os
 import threading
@@ -57,12 +57,15 @@ class DashCamThread(threading.Thread):
 
         def __init__(self,video_length, number_to_keep,state, folder,loc):
                 self.loc = loc
+                self.prev_loc = Location()
                 self.duration = video_length
                 self.files_to_keep = number_to_keep
                 self.cam = PiCamera()
                 self.cam.hflip = True
                 self.cam.vflip = True
                 self.cam.annotate_text_size = int(12)
+                self.cam.annotate_background = color.Color('black')
+                self.cam.annotate_foreground = color.Color(y=1.0, u=0,v=0)
 
                 self.state = state
                 self.folder = folder
@@ -90,12 +93,18 @@ class DashCamThread(threading.Thread):
                                         self.cam.start_recording(filename)
                                         start = datetime.now()
                                         while (datetime.now() - start).seconds < self.duration:
-                                            loc = get_location(ser) 
                                             if loc.lat != 0: 
-                                                self.cam.annotate_text = datetime.now().strftime('%Y-%m-%d %H:%M:%S') + str.format(" ({0},{1}:{2})",loc.lat,loc.lng,speed_mph)
+                                                if prev_loc.lat != 0:
+                                                	mph = speed(loc,prev_loc) 
+                                                	gps_str = " (%.6f,%.6f),speed: %.0f" % (loc.lat,loc.lng,mph) 
+                                               	else:
+                                                	gps_str = " (%.6f,%.6f)" % (loc.lat,loc.lng)
+                                                self.cam.annotate_text = datetime.now().strftime('%Y-%m-%d %H:%M:%S') + gps_str
+                                                prev_loc.lat = loc.lat   
+                                                prev_loc.lng = loc.lng   
                                             else:    
                                                 self.cam.annotate_text = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    
+                                            print(self.cam.annotate_text) 
                                             self.cam.wait_recording(0.1)
 
                                         self.cam.stop_recording()
@@ -118,8 +127,9 @@ if __name__ == '__main__':
 
         camstate = {"Mode":"dashcam","current_file":"None"}
         loc = Location()
+        prev_loc = Location()
         gps = GPSThread(loc)        
-        camthread = DashCamThread(60, 1,camstate, folder,loc)
+        camthread = DashCamThread(10, 1,camstate, folder,loc)
       
         log.info("Starting main threads")
         gps.start()

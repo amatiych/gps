@@ -47,6 +47,19 @@ def distance( loc1,loc2):
     theta = acos(cos_theta)
     return r * theta
 
+def speed(loc1,loc2):
+    dist = distance(loc1,loc2)
+    tdif = abs((loc1.time - loc2.time).seconds)
+    if tdif == 0:
+        return 0
+    met_seconds = dist / tdif
+    met_hour = met_seconds * 3600
+    mph = met_hour / 1609.34
+    return mph
+
+
+
+
 class Location:
 
     def __init__(self):
@@ -77,7 +90,7 @@ class GPSThread(threading.Thread):
         
     def run(self):
         while True:
-            data = str(ser.readline())
+            data = str(self.ser.readline())
             if "GPGGA" in data:
                 self.loc.update(data)
     
