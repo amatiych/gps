@@ -1,5 +1,5 @@
 from time import sleep
-from gps import get_serial, get_location, Location,distance
+from gps import  Location,distance,GPSThread
 from picamera import PiCamera
 from datetime import datetime
 import os
@@ -117,12 +117,14 @@ if __name__ == '__main__':
         log.info("LED Setup")
 
         camstate = {"Mode":"dashcam","current_file":"None"}
-        
-        camthread = DashCamThread(60, 1,camstate, folder)
+        loc = Location()
+        gps = GPSThread(loc)        
+        camthread = DashCamThread(60, 1,camstate, folder,loc)
       
         log.info("Starting main threads")
-
+        gps.start()
         camthread.start()
+        
  
       
  
