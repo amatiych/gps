@@ -10,7 +10,6 @@ import json
 
 folder = "/home/pi/Documents/videos"
 camera_name = "DashCam"
-
 log = setup_logging(name="camera daemon",fileName="/home/pi/Documents/log/camdaemon.log")
 
 
@@ -24,6 +23,7 @@ def capture_ex(fun):
         except Exception as ex:
             log.error("exception at {0} msg: {1}", fun, str(ex))
     return wrapper
+
 
 def sorted_ls(path):
         mtime = lambda f: os.stat(os.path.join(path, f)).st_mtime
@@ -51,18 +51,12 @@ class CleanerThread(threading.Thread):
         @capture_ex        
         def run(self):
             self.process_file()
-                        
-class GPSThread(threading.Thread):
-    def __init__(self, loc):
-        self.loc = loc
-        super(GPSThread,self).__init__()
-
-    def run(self):
                 
 
 class DashCamThread(threading.Thread):
 
         def __init__(self,video_length, number_to_keep,state, folder,loc):
+                self.loc = loc
                 self.duration = video_length
                 self.files_to_keep = number_to_keep
                 self.cam = PiCamera()
@@ -89,14 +83,6 @@ class DashCamThread(threading.Thread):
         @capture_ex        
         def run(self):
                 try:
-                        ser = get_serial()
-                        start_loc = get_location(ser)
-                        lat = start_loc
-                        while lat == 0:
-                                start_loc = get_location(ser)
-                                lat = start_loc.lat
-                        log.info("initial location %s" % start_loc)
-        
                         for filename in self.get_file_name():
                                 if filename:
                                         log.info("recording %s " % filename)
@@ -106,18 +92,10 @@ class DashCamThread(threading.Thread):
                                         while (datetime.now() - start).seconds < self.duration:
                                             loc = get_location(ser) 
                                             if loc.lat != 0: 
-                                                dist = distance(loc,start_loc)
-                                                tdf = (loc.time - start_loc.time).seconds
-                                                speed_ps = dist/tdf
-                                                speed_m = speed_ps * 3600/tdf
-                                                speed_mph = speed_m / 1609.34
-                                                print(dist, tdf, speed_ps, speed_m, speed_mph)
-                                                start_loc  = loc
                                                 self.cam.annotate_text = datetime.now().strftime('%Y-%m-%d %H:%M:%S') + str.format(" ({0},{1}:{2})",loc.lat,loc.lng,speed_mph)
                                             else:    
                                                 self.cam.annotate_text = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     
-                                            print("cam text: " + self.cam.annotate_text)    
                                             self.cam.wait_recording(0.1)
 
                                         self.cam.stop_recording()
