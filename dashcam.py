@@ -9,9 +9,8 @@ from core import setup_logging
 import json
 
 folder = "/home/pi/Documents/videos"
-camera_name = "Driveway"
-green_led = 11
-red_led = 7
+camera_name = "DashCam"
+
 log = setup_logging(name="camera daemon",fileName="/home/pi/Documents/log/camdaemon.log")
 
 
