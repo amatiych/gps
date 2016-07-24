@@ -1,6 +1,14 @@
 import serial
+from datetime import datetime
 from math import pi,cos, sin,acos
-from time import sleep
+
+def capture_ex(fun):
+        def wrapper(*args, **kwargs):
+                try:
+                        return fun(*args,**kwargs)
+                except Exception as ex:
+                        print(ex)
+        return wrapper
 
 def parse_degrees(locinfo):
 	fl = float(locinfo)/100.0
@@ -37,46 +45,40 @@ def distance( loc1,loc2):
 	theta = acos(cos_theta)
 	return r * theta
 
-class location:
-
+class Location:
 	def __init__(self,gpsline):
-		toks = gpsline.split(',')
-		self.time = toks[1]
-		lng_s = 1 if toks[3] == 'N' else -1
-		lat_s = 1 if toks[5] == 'E' else -1
-		self.lat = parse_degrees(toks[2]) * lng_s
-		self.lng = parse_degrees(toks[4]) * lat_s
-		self.alt =float(toks[9])
+		try:
+			toks = gpsline.split(',')
+			self.time = datetime.strptime(toks[1][:6],"%H%M%S")
+			lng_s = 1 if toks[3] == 'N' else -1
+			lat_s = 1 if toks[5] == 'E' else -1
+			self.lat = parse_degrees(toks[2]) * lng_s
+			self.lng = parse_degrees(toks[4]) * lat_s
+			self.alt =float(toks[9])
+		except Exception as ex:
+			print(ex)
+			self.time = 0
+			self.lat = 0
+			self.lng = 0
+			self.alt = 0
+
+	def __repr__(self):
+		return str.format("{2}:{0},{1}", self.lat, self.lng,self.time)
 
 def get_serial():
 	return serial.Serial('/dev/ttyS0',9600)
 
 def get_location(ser):
-	while True:
-		data = str(ser.readline())
-		if "GPGGA" in data:
-			loc = location(data)
-			return loc
+	try:
+		while True:
+			data = str(ser.readline())
+			if "GPGGA" in data:
+				loc = Location(data)
+				return loc
+	except Exception as ex:
+		return None
 
-def get_locations(ser):
-	while True:
-		yield(get_location(ser))
 
 if __name__ == '__main__':
-	ser = get_serial()
-	prev = get_location(ser)
-
-	with open("/home/pi/Documents/python/gps/gps.log","a") as file:
-		file.write(str.format("{0},{1},{2},{3}\n", prev.time, prev.lat,prev.lng,0))
-		for current in get_locations(ser):
-			try:
-				d = distance(prev,current)
-				if d > 1:
-					file.write(str.format("{0},{1},{2},{3}\n", current.time, current.lat,current.lng,d))
-					print(current.time,current.lat,current.lng,d)
-				prev = current
-			except:
-				pass
-	
-
+	print(get_location(get_serial()))
 
