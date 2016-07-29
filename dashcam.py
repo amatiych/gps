@@ -67,7 +67,7 @@ class WriteLogThread(threading.Thread):
                         		sleep(1)
 		
 
-class DashCamThread(threading.Thread):
+class DashCamThread():
 
         def __init__(self,video_length, number_to_keep,state, folder,loc):
                 self.loc = loc
@@ -83,7 +83,7 @@ class DashCamThread(threading.Thread):
 
                 self.state = state
                 self.folder = folder
-                super(DashCamThread,self).__init__()
+                #super(DashCamThread,self).__init__()
 
         def get_file_name(self):
                 timestamp = lambda : datetime.now().strftime("%Y%m%d_%H%M%s")
@@ -118,8 +118,7 @@ class DashCamThread(threading.Thread):
                                                 prev_loc.lng = loc.lng   
                                             else:    
                                                 self.cam.annotate_text = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                                            print(self.cam.annotate_text) 
-                                            self.cam.wait_recording(0.1)
+                                            self.cam.wait_recording(0)
 
                                         self.cam.stop_recording()
                                         cleaner = CleanerThread(filename)
@@ -149,7 +148,7 @@ if __name__ == '__main__':
         log.info("Starting main threads")
         gps.start()
         logger.start()
-        camthread.start()
+        camthread.run()
         
  
       

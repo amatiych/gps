@@ -18,6 +18,7 @@ def parse_degrees(locinfo):
     fra = fl - deg
     return deg + fra*100.0/60
 
+@capture_ex
 def distance( loc1,loc2):
     lat1,lon1 = loc1.lat,loc1.lng
     lat2,lon2 = loc2.lat,loc2.lng
@@ -47,6 +48,7 @@ def distance( loc1,loc2):
     theta = acos(cos_theta)
     return r * theta
 
+@capture_ex
 def speed(loc1,loc2):
     dist = distance(loc1,loc2)
     tdif = abs((loc1.time - loc2.time).seconds)
@@ -70,13 +72,16 @@ class Location:
 
     @capture_ex        
     def update(self,gpsline):
+
         toks = gpsline.split(',')
-        self.time = datetime.strptime(toks[1][:6],"%H%M%S")
-        lng_s = 1 if toks[3] == 'N' else -1
-        lat_s = 1 if toks[5] == 'E' else -1
-        self.lat = parse_degrees(toks[2]) * lng_s
-        self.lng = parse_degrees(toks[4]) * lat_s
-        self.alt =float(toks[9])
+
+        if toks[6] != "0":
+            self.time = datetime.strptime(toks[1][:6],"%H%M%S")
+            lng_s = 1 if toks[3] == 'N' else -1
+            lat_s = 1 if toks[5] == 'E' else -1
+            self.lat = parse_degrees(toks[2]) * lng_s
+            self.lng = parse_degrees(toks[4]) * lat_s
+            self.alt =float(toks[9])
 
     def __repr__(self):
         return str.format("{2}:{0},{1}", self.lat, self.lng,self.time)
