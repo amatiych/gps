@@ -43,7 +43,7 @@ class CleanerThread(threading.Thread):
         @capture_ex
         def process_file(self):
                 mp4name = convert(self.file)
-                os.remove(self.file)
+                #os.remove(self.file)
                 log.info("Uploading to AWS : %s"  % mp4name)
                 #os.remove(mp4name)
                
@@ -92,7 +92,8 @@ class DashCamThread():
                         
                         if self.state["Mode"] == 'dashcam':
                                 filename =  str.format("{0}_{1}.h264", camera_name, timestamp())
-                                yield os.path.join(self.folder, filename)
+                                jpgname =  str.format("{0}_{1}.jpg", camera_name, timestamp())
+                                yield os.path.join(self.folder, filename), os.path.join(self.folder,"thumbs", jpgname)
                         else:
                                 yield None
                         sleep(0.1)
@@ -100,9 +101,12 @@ class DashCamThread():
         @capture_ex        
         def run(self):
                 try:
-                        for filename in self.get_file_name():
+
+                        snapshot_filename = os.path.join(self.folder,"snapshot.jpg")
+                        for filename,jpgname in self.get_file_name():
                                 if filename:
                                         log.info("recording %s " % filename)
+                                        self.cam.capture(jpgname,use_video_port=True)
                                         self.state["current_file"] = filename
                                         self.cam.start_recording(filename)
                                         start = datetime.now()
@@ -118,11 +122,12 @@ class DashCamThread():
                                                 prev_loc.lng = loc.lng   
                                             else:    
                                                 self.cam.annotate_text = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                                            self.cam.wait_recording(0)
+                                            self.cam.capture(snapshot_filename,use_video_port=True)
+                                            self.cam.wait_recording(1)
 
                                         self.cam.stop_recording()
-                                        cleaner = CleanerThread(filename)
-                                        cleaner.start()
+                                        #cleaner = CleanerThread(filename)
+                                        #cleaner.start()
                 except Exception as ex:
                         log.error(ex)
                                 
@@ -132,11 +137,7 @@ class DashCamThread():
         
 if __name__ == '__main__':
        
-        log.info("starting camera daemone")
-
-
-
-        log.info("LED Setup")
+        log.info("starting camera daemon")
 
         camstate = {"Mode":"dashcam","current_file":"None"}
         loc = Location()
